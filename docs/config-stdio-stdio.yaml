@@ -1,0 +1,31 @@
+# MCP Server Configuration
+server:
+  name: "MCP Proxy"
+  version: "0.1.0"
+  transport:
+    type: "stdio"
+
+  options:
+    cache_threshold_bytes: 10000
+    pagination_default_page_size: 50
+    pagination_max_page_size: 1000
+
+# Config related to the MCP behind the proxy
+backend:
+  transport:
+    type: "stdio"
+
+    stdio:
+      command: "/usr/bin/docker"
+      args:
+        - "run"
+        - "-i"
+        - "--rm"
+        - "-e"
+        - "HA_URL"
+        - "-e"
+        - "HA_TOKEN"
+        - "voska/hass-mcp"
+      env:
+        - "HA_URL=https://home-assistant.example.com"
+        - "HA_TOKEN=eyXXX.eyYYY.ZZZ"

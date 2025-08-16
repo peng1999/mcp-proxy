@@ -1,0 +1,21 @@
+# MCP Server Configuration
+server:
+  name: "MCP Proxy"
+  version: "0.1.0"
+  transport:
+    type: "stdio"
+
+  options:
+    cache_threshold_bytes: 10000
+    pagination_default_page_size: 50
+    pagination_max_page_size: 1000
+
+# Config related to the MCP behind the proxy
+backend:
+  transport:
+    type: "http"
+
+    http:
+      url: "http://localhost:8080/mcp"
+      headers: {}
+        # "Authorization": "Bearer ${API_KEY}"
