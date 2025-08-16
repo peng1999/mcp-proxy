@@ -7,7 +7,7 @@
 ![GitHub followers](https://img.shields.io/github/followers/achetronic?label=achetronic&link=http%3A%2F%2Fgithub.com%2Fachetronic)
 ![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/achetronic?style=flat&logo=twitter&link=https%3A%2F%2Ftwitter.com%2Fachetronic)
 
-A production-ready proxy for Model Context Protocol (MCP) servers that adds authentication, authorization, and enterprise features to any MCP backend. Transform your local MCP servers into secure, scalable services ready for remote access.
+A proxy for Model Context Protocol (MCP) servers that adds authentication, authorization, and enterprise features to any MCP backend. Transform your local MCP servers into secure, scalable services ready for remote access.
 
 ## Motivation
 
