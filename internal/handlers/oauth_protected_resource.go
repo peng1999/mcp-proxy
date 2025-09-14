@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 )
 
 // OauthProtectedResourceResponse represents the response returned by '.well-known/oauth-protected-resource' endpoint
@@ -34,8 +35,12 @@ type OauthProtectedResourceResponse struct {
 
 // HandleOauthProtectedResources process requests for endpoint: /.well-known/oauth-protected-resource
 func (h *HandlersManager) HandleOauthProtectedResources(response http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		response.Header().Set("Allow", http.MethodGet)
+		http.Error(response, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-	//
 	ResponseObject := &OauthProtectedResourceResponse{
 		Resource:                              h.dependencies.AppCtx.Config.OAuthProtectedResource.Resource,
 		AuthorizationServers:                  h.dependencies.AppCtx.Config.OAuthProtectedResource.AuthServers,
@@ -63,9 +68,14 @@ func (h *HandlersManager) HandleOauthProtectedResources(response http.ResponseWr
 
 	response.Header().Set("Content-Type", "application/json")
 	response.Header().Set("Cache-Control", "max-age=3600")
-	response.Header().Set("Access-Control-Allow-Origin", "*")
-	response.Header().Set("Access-Control-Allow-Methods", "GET")          // FIXME: TOO STRICT
-	response.Header().Set("Access-Control-Allow-Headers", "Content-Type") // FIXME: TOO STRICT
+	if origin := request.Header.Get("Origin"); origin != "" {
+		if o, err := url.Parse(origin); err == nil && o.Host == request.Host {
+			response.Header().Set("Access-Control-Allow-Origin", origin)
+			response.Header().Set("Vary", "Origin")
+			response.Header().Set("Access-Control-Allow-Methods", http.MethodGet)
+			response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		}
+	}
 
 	_, err = response.Write(ResponseObjectBytes)
 	if err != nil {
