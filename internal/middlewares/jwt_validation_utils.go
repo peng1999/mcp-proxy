@@ -148,6 +148,53 @@ func (mw *JWTValidationMiddleware) isTokenValid(token string) (bool, error) {
 		return false, fmt.Errorf("invalid token: %v", err)
 	}
 
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return false, fmt.Errorf("invalid token claims type")
+	}
+
+	iss, ok := claims["iss"].(string)
+	if !ok {
+		return false, fmt.Errorf("issuer claim not found")
+	}
+
+	validIssuer := false
+	for _, allowed := range mw.dependencies.AppCtx.Config.OAuthProtectedResource.AuthServers {
+		if iss == allowed {
+			validIssuer = true
+			break
+		}
+	}
+	if !validIssuer {
+		return false, fmt.Errorf("issuer mismatch")
+	}
+
+	audClaim, ok := claims["aud"]
+	if !ok {
+		return false, fmt.Errorf("audience claim not found")
+	}
+
+	expectedAud := mw.dependencies.AppCtx.Config.OAuthProtectedResource.Resource
+	switch aud := audClaim.(type) {
+	case string:
+		if aud != expectedAud {
+			return false, fmt.Errorf("audience mismatch")
+		}
+	case []interface{}:
+		found := false
+		for _, a := range aud {
+			if s, ok := a.(string); ok && s == expectedAud {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false, fmt.Errorf("audience mismatch")
+		}
+	default:
+		return false, fmt.Errorf("invalid audience claim type")
+	}
+
 	return true, nil
 }
 
