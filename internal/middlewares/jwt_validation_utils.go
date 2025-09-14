@@ -49,30 +49,36 @@ func (mw *JWTValidationMiddleware) cacheJWKS() {
 
 	mw.dependencies.AppCtx.Logger.Info("JWKS cache daemon running for JWT auth middleware")
 
+	client := &http.Client{Timeout: 10 * time.Second}
+
 	for {
 		var jwks JWKS
 
-		//
-		resp, err := http.Get(mw.dependencies.AppCtx.Config.Middleware.JWT.Validation.Local.JWKSUri)
+		resp, err := client.Get(mw.dependencies.AppCtx.Config.Middleware.JWT.Validation.Local.JWKSUri)
 		if err != nil {
 			mw.dependencies.AppCtx.Logger.Error("failed getting JWKS from remote", "error", err.Error())
 			goto haveANap
 		}
-		defer resp.Body.Close()
-
-		//
-		if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
-			mw.dependencies.AppCtx.Logger.Error("failed decoding JWKS from remote", "error", err.Error())
+		if resp.StatusCode != http.StatusOK {
+			mw.dependencies.AppCtx.Logger.Error("unexpected JWKS status code", "status", resp.StatusCode)
+			resp.Body.Close()
 			goto haveANap
 		}
 
-		//
+		if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+			mw.dependencies.AppCtx.Logger.Error("failed decoding JWKS from remote", "error", err.Error())
+			resp.Body.Close()
+			goto haveANap
+		}
+
+		resp.Body.Close()
+
 		mw.mutex.Lock()
 		mw.jwks = &jwks
 		mw.mutex.Unlock()
 
-		// Don't be greedy, man
 	haveANap:
+		// Don't be greedy, man
 		time.Sleep(mw.dependencies.AppCtx.Config.Middleware.JWT.Validation.Local.CacheInterval)
 	}
 }
