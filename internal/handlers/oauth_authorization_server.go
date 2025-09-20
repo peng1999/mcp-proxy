@@ -3,7 +3,6 @@ package handlers
 import (
 	"io"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -40,14 +39,6 @@ func (h *HandlersManager) HandleOauthAuthorizationServer(response http.ResponseW
 
 	response.Header().Set("Content-Type", "application/json")
 	response.Header().Set("Cache-Control", "max-age=3600")
-	if origin := request.Header.Get("Origin"); origin != "" {
-		if o, err := url.Parse(origin); err == nil && o.Host == request.Host {
-			response.Header().Set("Access-Control-Allow-Origin", origin)
-			response.Header().Set("Vary", "Origin")
-			response.Header().Set("Access-Control-Allow-Methods", http.MethodGet)
-			response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		}
-	}
 
 	_, err = response.Write(remoteResponseBytes)
 	if err != nil {

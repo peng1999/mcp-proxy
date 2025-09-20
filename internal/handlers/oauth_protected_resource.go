@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 )
 
 // OauthProtectedResourceResponse represents the response returned by '.well-known/oauth-protected-resource' endpoint
@@ -68,14 +67,6 @@ func (h *HandlersManager) HandleOauthProtectedResources(response http.ResponseWr
 
 	response.Header().Set("Content-Type", "application/json")
 	response.Header().Set("Cache-Control", "max-age=3600")
-	if origin := request.Header.Get("Origin"); origin != "" {
-		if o, err := url.Parse(origin); err == nil && o.Host == request.Host {
-			response.Header().Set("Access-Control-Allow-Origin", origin)
-			response.Header().Set("Vary", "Origin")
-			response.Header().Set("Access-Control-Allow-Methods", http.MethodGet)
-			response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		}
-	}
 
 	_, err = response.Write(ResponseObjectBytes)
 	if err != nil {

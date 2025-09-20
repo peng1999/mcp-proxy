@@ -158,14 +158,17 @@ func (mw *JWTValidationMiddleware) isTokenValid(token string) (bool, error) {
 		return false, fmt.Errorf("issuer claim not found")
 	}
 
-	validIssuer := false
-	for _, allowed := range mw.dependencies.AppCtx.Config.OAuthProtectedResource.AuthServers {
-		if iss == allowed {
-			validIssuer = true
-			break
-		}
+	// Validate issuer against configured Authorization Server issuer_uri
+	expectedIssuer := mw.dependencies.AppCtx.Config.OAuthAuthorizationServer.IssuerUri
+	if expectedIssuer == "" {
+		return false, fmt.Errorf("issuer validation not configured")
 	}
-	if !validIssuer {
+
+	// Normalize possible trailing slashes for comparison
+	normalize := func(s string) string {
+		return strings.TrimRight(s, "/")
+	}
+	if normalize(iss) != normalize(expectedIssuer) {
 		return false, fmt.Errorf("issuer mismatch")
 	}
 

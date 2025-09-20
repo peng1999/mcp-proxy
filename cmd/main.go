@@ -29,6 +29,10 @@ func main() {
 		AppCtx: appCtx,
 	})
 
+	corsMw := middlewares.NewCORSMiddleware(middlewares.CORSMiddlewareDependencies{
+		AppCtx: appCtx,
+	})
+
 	jwtValidationMw, err := middlewares.NewJWTValidationMiddleware(middlewares.JWTValidationMiddlewareDependencies{
 		AppCtx: appCtx,
 	})
@@ -77,14 +81,14 @@ func main() {
 		// Custom endpoints are needed as the library is not feature-complete according to MCP spec requirements (2025-06-16)
 		// Ref: https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization#overview
 		mux := http.NewServeMux()
-		mux.Handle("/mcp", accessLogsMw.Middleware(jwtValidationMw.Middleware(httpServer)))
+		mux.Handle("/mcp", accessLogsMw.Middleware(corsMw.Middleware(jwtValidationMw.Middleware(httpServer))))
 
 		if appCtx.Config.OAuthAuthorizationServer.Enabled {
-			mux.Handle("/.well-known/oauth-authorization-server", accessLogsMw.Middleware(http.HandlerFunc(hm.HandleOauthAuthorizationServer)))
+			mux.Handle("/.well-known/oauth-authorization-server", accessLogsMw.Middleware(corsMw.Middleware(http.HandlerFunc(hm.HandleOauthAuthorizationServer))))
 		}
 
 		if appCtx.Config.OAuthProtectedResource.Enabled {
-			mux.Handle("/.well-known/oauth-protected-resource", accessLogsMw.Middleware(http.HandlerFunc(hm.HandleOauthProtectedResources)))
+			mux.Handle("/.well-known/oauth-protected-resource", accessLogsMw.Middleware(corsMw.Middleware(http.HandlerFunc(hm.HandleOauthProtectedResources))))
 		}
 
 		// Start StreamableHTTP server
